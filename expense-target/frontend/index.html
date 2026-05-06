@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - Personal Finance</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-wallet"></i>
+            <h2>FinanceFlow</h2>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="active" data-page="dashboard">
+                <i class="fas fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </li>
+            <li data-page="transactions">
+                <i class="fas fa-list"></i>
+                <span>Transactions</span>
+            </li>
+            <li data-page="budgets">
+                <i class="fas fa-piggy-bank"></i>
+                <span>Budgets</span>
+            </li>
+            <li data-page="goals">
+                <i class="fas fa-bullseye"></i>
+                <span>Goals</span>
+            </li>
+            <li data-page="recurring">
+                <i class="fas fa-sync"></i>
+                <span>Recurring</span>
+            </li>
+            <li data-page="analytics">
+                <i class="fas fa-chart-line"></i>
+                <span>Analytics</span>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <button id="themeToggle" class="theme-btn">
+                <i class="fas fa-moon"></i>
+                <span>Dark Mode</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <button id="sidebarToggle" class="menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search transactions..." id="globalSearch">
+            </div>
+            <div class="top-actions">
+                <button class="notification-btn" id="notificationBtn">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge" id="notificationBadge">0</span>
+                </button>
+                <div class="user-menu">
+                    <img src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff" alt="User">
+                    <span>My Account</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Page -->
+        <div class="page active" id="dashboard">
+            <div class="page-header">
+                <h1>Dashboard</h1>
+                <button class="btn btn-primary" onclick="openModal('addExpense')">
+                    <i class="fas fa-plus"></i> Add Transaction
+                </button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card income">
+                    <div class="stat-icon"><i class="fas fa-arrow-up"></i></div>
+                    <div class="stat-info">
+                        <p class="stat-label">Monthly Income</p>
+                        <h3 class="stat-value" id="monthlyIncome">$0.00</h3>
+                        <span class="stat-change positive">+12% vs last month</span>
+                    </div>
+                </div>
+                <div class="stat-card expense">
+                    <div class="stat-icon"><i class="fas fa-arrow-down"></i></div>
+                    <div class="stat-info">
+                        <p class="stat-label">Monthly Expenses</p>
+                        <h3 class="stat-value" id="monthlyExpenses">$0.00</h3>
+                        <span class="stat-change negative">+5% vs last month</span>
+                    </div>
+                </div>
+                <div class="stat-card savings">
+                    <div class="stat-icon"><i class="fas fa-piggy-bank"></i></div>
+                    <div class="stat-info">
+                        <p class="stat-label">Monthly Savings</p>
+                        <h3 class="stat-value" id="monthlySavings">$0.00</h3>
+                        <span class="stat-change" id="savingsRate">0% rate</span>
+                    </div>
+                </div>
+                <div class="stat-card balance">
+                    <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                    <div class="stat-info">
+                        <p class="stat-label">Net Balance</p>
+                        <h3 class="stat-value" id="netBalance">$0.00</h3>
+                        <span class="stat-change">This month</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-row">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h3>Spending Overview</h3>
+                        <select id="chartPeriod">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 3 months</option>
+                        </select>
+                    </div>
+                    <canvas id="spendingChart"></canvas>
+                </div>
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h3>Category Breakdown</h3>
+                    </div>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Bottom Row -->
+            <div class="bottom-row">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Recent Transactions</h3>
+                        <a href="#" class="view-all" data-page="transactions">View All</a>
+                    </div>
+                    <div class="transaction-list" id="recentTransactions"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Budget Alerts</h3>
+                    </div>
+                    <div class="alert-list" id="budgetAlerts"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Upcoming Bills</h3>
+                    </div>
+                    <div class="bill-list" id="upcomingBills"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Page -->
+        <div class="page" id="transactions">
+            <div class="page-header">
+                <h1>Transactions</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="exportCSV()">
+                        <i class="fas fa-download"></i> Export CSV
+                    </button>
+                    <button class="btn btn-primary" onclick="openModal('addExpense')">
+                        <i class="fas fa-plus"></i> Add Transaction
+                    </button>
+                </div>
+            </div>
+            
+            <div class="filters-bar">
+                <div class="filter-group">
+                    <input type="date" id="filterStartDate" placeholder="Start Date">
+                    <input type="date" id="filterEndDate" placeholder="End Date">
+                </div>
+                <select id="filterCategory">
+                    <option value="">All Categories</option>
+                    <option value="Food & Dining">Food & Dining</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Housing & Utilities">Housing & Utilities</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Health & Fitness">Health & Fitness</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Education">Education</option>
+                    <option value="Subscriptions">Subscriptions</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" id="filterSearch" placeholder="Search...">
+                <button class="btn btn-secondary" onclick="applyFilters()">Filter</button>
+            </div>
+
+            <div class="card">
+                <table class="data-table" id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsBody"></tbody>
+                </table>
+                <div class="pagination">
+                    <button onclick="prevPage()" id="prevBtn">Previous</button>
+                    <span id="pageInfo">Page 1</span>
+                    <button onclick="nextPage()" id="nextBtn">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budgets Page -->
+        <div class="page" id="budgets">
+            <div class="page-header">
+                <h1>Budgets</h1>
+                <button class="btn btn-primary" onclick="openModal('addBudget')">
+                    <i class="fas fa-plus"></i> Create Budget
+                </button>
+            </div>
+            <div class="budgets-grid" id="budgetsGrid"></div>
+        </div>
+
+        <!-- Goals Page -->
+        <div class="page" id="goals">
+            <div class="page-header">
+                <h1>Savings Goals</h1>
+                <button class="btn btn-primary" onclick="openModal('addGoal')">
+                    <i class="fas fa-plus"></i> New Goal
+                </button>
+            </div>
+            <div class="goals-grid" id="goalsGrid"></div>
+        </div>
+
+        <!-- Recurring Page -->
+        <div class="page" id="recurring">
+            <div class="page-header">
+                <h1>Recurring Expenses</h1>
+                <button class="btn btn-primary" onclick="openModal('addRecurring')">
+                    <i class="fas fa-plus"></i> Add Recurring
+                </button>
+            </div>
+            <div class="card">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Frequency</th>
+                            <th>Next Due</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recurringBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Analytics Page -->
+        <div class="page" id="analytics">
+            <div class="page-header">
+                <h1>Analytics</h1>
+                <select id="analyticsPeriod">
+                    <option value="3">Last 3 months</option>
+                    <option value="6">Last 6 months</option>
+                    <option value="12" selected>Last 12 months</option>
+                </select>
+            </div>
+            
+            <div class="charts-row">
+                <div class="card chart-card large">
+                    <div class="card-header">
+                        <h3>Income vs Expenses Trend</h3>
+                    </div>
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="charts-row">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h3>Budget vs Actual</h3>
+                    </div>
+                    <canvas id="budgetActualChart"></canvas>
+                </div>
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h3>Daily Spending Pattern</h3>
+                    </div>
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+    
+    <!-- Add Expense Modal -->
+    <div class="modal" id="addExpenseModal">
+        <div class="modal-header">
+            <h3>Add Transaction</h3>
+            <button class="close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="expenseForm" onsubmit="saveExpense(event)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Type</label>
+                    <select name="is_income" id="expenseType">
+                        <option value="false">Expense</option>
+                        <option value="true">Income</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Amount *</label>
+                    <input type="number" name="amount" step="0.01" required placeholder="0.00">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" name="description" placeholder="What was this for?">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Category *</label>
+                    <select name="category" required id="expenseCategory">
+                        <option value="Food & Dining">Food & Dining</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Housing & Utilities">Housing & Utilities</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Health & Fitness">Health & Fitness</option>
+                        <option value="Travel">Travel</option>
+                        <option value="Education">Education</option>
+                        <option value="Subscriptions">Subscriptions</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" name="date" required id="expenseDate">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select name="payment_method">
+                        <option value="cash">Cash</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="debit_card">Debit Card</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="mobile_payment">Mobile Payment</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tags (comma separated)</label>
+                    <input type="text" name="tags" placeholder="personal, work, urgent">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Transaction</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Add Budget Modal -->
+    <div class="modal" id="addBudgetModal">
+        <div class="modal-header">
+            <h3>Create Budget</h3>
+            <button class="close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="budgetForm" onsubmit="saveBudget(event)">
+            <div class="form-group">
+                <label>Category *</label>
+                <select name="category" required>
+                    <option value="Food & Dining">Food & Dining</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Housing & Utilities">Housing & Utilities</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Health & Fitness">Health & Fitness</option>
+                    <option value="Travel">Travel</option>
+                    <option value="Education">Education</option>
+                    <option value="Subscriptions">Subscriptions</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Budget Amount *</label>
+                    <input type="number" name="amount" step="0.01" required placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Period</label>
+                    <select name="period">
+                        <option value="monthly">Monthly</option>
+                        <option value="weekly">Weekly</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Alert Threshold (%)</label>
+                    <input type="number" name="alert_threshold" value="80" min="0" max="100">
+                </div>
+                <div class="form-group">
+                    <label>Start Date *</label>
+                    <input type="date" name="start_date" required id="budgetStartDate">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Budget</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Add Goal Modal -->
+    <div class="modal" id="addGoalModal">
+        <div class="modal-header">
+            <h3>New Savings Goal</h3>
+            <button class="close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="goalForm" onsubmit="saveGoal(event)">
+            <div class="form-group">
+                <label>Goal Name *</label>
+                <input type="text" name="name" required placeholder="e.g., Emergency Fund">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Target Amount *</label>
+                    <input type="number" name="target_amount" step="0.01" required placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Current Amount</label>
+                    <input type="number" name="current_amount" step="0.01" value="0" placeholder="0.00">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category">
+                        <option value="savings">Savings</option>
+                        <option value="emergency">Emergency Fund</option>
+                        <option value="vacation">Vacation</option>
+                        <option value="home">Home</option>
+                        <option value="vehicle">Vehicle</option>
+                        <option value="education">Education</option>
+                        <option value="retirement">Retirement</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Deadline</label>
+                    <input type="date" name="deadline">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Color</label>
+                <input type="color" name="color" value="#3b82f6">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Goal</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Add Recurring Modal -->
+    <div class="modal" id="addRecurringModal">
+        <div class="modal-header">
+            <h3>Add Recurring Expense</h3>
+            <button class="close-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="recurringForm" onsubmit="saveRecurring(event)">
+            <div class="form-group">
+                <label>Name *</label>
+                <input type="text" name="name" required placeholder="e.g., Netflix">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Amount *</label>
+                    <input type="number" name="amount" step="0.01" required placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Category *</label>
+                    <select name="category" required>
+                        <option value="Subscriptions">Subscriptions</option>
+                        <option value="Housing & Utilities">Housing & Utilities</option>
+                        <option value="Health & Fitness">Health & Fitness</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Frequency *</label>
+                    <select name="frequency" required>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="biweekly">Bi-weekly</option>
+                        <option value="monthly" selected>Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Next Due Date *</label>
+                    <input type="date" name="next_due_date" required id="recurringDate">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Payment Method</label>
+                    <select name="payment_method">
+                        <option value="credit_card">Credit Card</option>
+                        <option value="debit_card">Debit Card</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cash">Cash</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Auto Pay</label>
+                    <select name="auto_pay">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Notification Panel -->
+    <div class="notification-panel" id="notificationPanel">
+        <div class="panel-header">
+            <h3>Notifications</h3>
+            <button onclick="closeNotifications()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="panel-content" id="notificationContent"></div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
+
